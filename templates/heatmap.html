@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗺️ AQI Heatmap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .back-btn:hover { transform: translateY(-2px); }
+        .map-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+        }
+        #map { height: 600px; border-radius: 15px; }
+        .legend {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .legend h3 { margin-bottom: 15px; color: #333; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Interactive AQI Heatmap</h1>
+            <p>Real-time Air Quality visualization across major cities</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+
+        <div class="legend">
+            <h3>AQI Color Legend:</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #00e400;"></div>
+                <span><strong>Good (0-50):</strong> Air quality is satisfactory</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffff00;"></div>
+                <span><strong>Moderate (51-100):</strong> Acceptable air quality</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff7e00;"></div>
+                <span><strong>Unhealthy for Sensitive (101-150):</strong> Sensitive groups affected</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ff0000;"></div>
+                <span><strong>Unhealthy (151-200):</strong> Everyone affected</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #8f3f97;"></div>
+                <span><strong>Very Unhealthy (201-300):</strong> Serious health effects</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #7e0023;"></div>
+                <span><strong>Hazardous (301+):</strong> Emergency conditions</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const map = L.map('map').setView([23.5, 78.0], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        function getAQIColor(aqi) {
+            if (aqi <= 50) return '#00e400';
+            if (aqi <= 100) return '#ffff00';
+            if (aqi <= 150) return '#ff7e00';
+            if (aqi <= 200) return '#ff0000';
+            if (aqi <= 300) return '#8f3f97';
+            return '#7e0023';
+        }
+
+        fetch('/api/heatmap-data')
+            .then(response => response.json())
+            .then(data => {
+                data.cities.forEach(city => {
+                    const color = getAQIColor(city.aqi);
+                    const marker = L.circleMarker([city.lat, city.lon], {
+                        radius: 15,
+                        fillColor: color,
+                        color: '#fff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+
+                    marker.bindPopup(`
+                        <div style="text-align: center;">
+                            <h3>${city.city}</h3>
+                            <p><strong>AQI:</strong> ${city.aqi}</p>
+                            <p><strong>PM2.5:</strong> ${city.pm25} µg/m³</p>
+                            <p><strong>Category:</strong> ${city.category}</p>
+                        </div>
+                    `);
+                });
+            })
+            .catch(error => console.error('Error loading heatmap data:', error));
+    </script>
+</body>
+</html>

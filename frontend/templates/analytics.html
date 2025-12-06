@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .search-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .search-box {
+            position: relative;
+        }
+        .search-box input {
+            width: calc(100% - 150px);
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-right: 10px;
+        }
+        #suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 160px;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .suggestion-item:hover {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        .search-box button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .stat-card h3 { color: #667eea; font-size: 0.9rem; margin-bottom: 10px; }
+        .stat-card .value { font-size: 2.5rem; font-weight: 700; color: #333; }
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .chart-container canvas { max-height: 400px; }
+        .analytics-container { display: none; }
+        .error { background: #f8d7da; color: #721c24; padding: 20px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Advanced Analytics Dashboard</h1>
+            <p>Statistical analysis and insights from historical AQI data</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="🔍 Start typing city name..." autocomplete="off" />
+            <div id="suggestions"></div>
+            <button onclick="getAnalytics()">Analyze Data</button>
+        </div>
+
+        <div class="analytics-container" id="analyticsContainer">
+            <div class="stats-grid" id="statsGrid"></div>
+            
+            <div class="chart-container">
+                <h2>📊 Category Distribution</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h2>🔗 Pollutant Correlations</h2>
+                <canvas id="correlationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store chart instances globally to destroy before recreating
+        let categoryChart = null;
+        let correlationChart = null;
+
+        // CITY AUTOCOMPLETE - Same as main dashboard
+        const cities = [
+            "Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Pune", "Ahmedabad", "Surat", "Jaipur",
+            "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Agra",
+            "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Amritsar", "Chandigarh", "Guwahati", "Dehradun",
+            "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala",
+            "Hyderabad", "Sukkur", "Larkana", "Khairpur", "Mirpur Khas", "Nawabshah", "Shikarpur", "Jacobabad", "Kandhkot", "Ghotki",
+            "London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool", "Edinburgh", "Bristol", "Sheffield", "Newcastle",
+            "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+            "Dubai", "Abu Dhabi", "Sharjah", "Doha", "Riyadh", "Jeddah", "Mecca", "Medina", "Kuwait City", "Muscat",
+            "Beijing", "Shanghai", "Tokyo", "Seoul", "Bangkok", "Singapore", "Kuala Lumpur", "Jakarta", "Manila", "Hanoi"
+        ];
+
+        const cityInput = document.getElementById('cityInput');
+        const suggestionsDiv = document.getElementById('suggestions');
+
+        cityInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            
+            if (query.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            const matches = cities.filter(city => 
+                city.toLowerCase().includes(query)
+            ).sort((a, b) => {
+                const aStarts = a.toLowerCase().startsWith(query);
+                const bStarts = b.toLowerCase().startsWith(query);
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return a.localeCompare(b);
+            }).slice(0, 10);
+
+            if (matches.length === 0) {
+                suggestionsDiv.innerHTML = '<div style="padding:15px;text-align:center;color:#ff6b6b;">⚠️ No cities found</div>';
+                suggestionsDiv.style.display = 'block';
+                return;
+            }
+
+            suggestionsDiv.innerHTML = matches.map(city => {
+                const regex = new RegExp(`(${query})`, 'gi');
+                const highlightedCity = city.replace(regex, '<span style="background:#ffeb3b;color:#000;font-weight:700;padding:1px 3px;border-radius:3px;">$1</span>');
+                return `<div class="suggestion-item" onclick="selectCity('${city}')">${highlightedCity}</div>`;
+            }).join('');
+            
+            suggestionsDiv.style.display = 'block';
+        });
+
+        function selectCity(city) {
+            cityInput.value = city;
+            suggestionsDiv.style.display = 'none';
+            getAnalytics();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target !== cityInput && e.target !== suggestionsDiv) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        function getAnalytics() {
+            const city = document.getElementById('cityInput').value.trim();
+            if (!city) {
+                alert('Please enter a city name');
+                return;
+            }
+
+            fetch(`/api/analytics/${encodeURIComponent(city)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    displayAnalytics(data);
+                })
+                .catch(error => alert('Error: ' + error.message));
+        }
+
+        function displayAnalytics(data) {
+            // Destroy existing charts before creating new ones
+            if (categoryChart) {
+                categoryChart.destroy();
+                categoryChart = null;
+            }
+            if (correlationChart) {
+                correlationChart.destroy();
+                correlationChart = null;
+            }
+
+            const container = document.getElementById('analyticsContainer');
+            container.style.display = 'block';
+
+            // Display statistics
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>Average AQI</h3>
+                    <div class="value">${data.statistics.aqi_mean}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Median AQI</h3>
+                    <div class="value">${data.statistics.aqi_median}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Min AQI</h3>
+                    <div class="value" style="color: #00e400;">${data.statistics.aqi_min}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Max AQI</h3>
+                    <div class="value" style="color: #ff0000;">${data.statistics.aqi_max}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Std Deviation</h3>
+                    <div class="value">${data.statistics.aqi_std}</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Trend</h3>
+                    <div class="value" style="font-size: 1.5rem;">${data.trend === 'improving' ? '📈 Better' : '📉 Worse'}</div>
+                </div>
+            `;
+
+            // Category Distribution Chart
+            const categories = Object.keys(data.category_distribution);
+            const counts = Object.values(data.category_distribution);
+            
+            const ctx1 = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: categories,
+                    datasets: [{
+                        data: counts,
+                        backgroundColor: ['#00e400', '#ffff00', '#ff7e00', '#ff0000', '#8f3f97', '#7e0023']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Correlation Matrix
+            if (data.correlations) {
+                const pollutants = Object.keys(data.correlations);
+                const corrData = [];
+                pollutants.forEach(p1 => {
+                    pollutants.forEach(p2 => {
+                        corrData.push({
+                            x: p1,
+                            y: p2,
+                            v: data.correlations[p1][p2]
+                        });
+                    });
+                });
+
+                const ctx2 = document.getElementById('correlationChart').getContext('2d');
+                correlationChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: pollutants,
+                        datasets: [{
+                            label: 'Correlation with AQI',
+                            data: pollutants.map(p => data.correlations['aqi'][p]),
+                            backgroundColor: '#667eea'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true, max: 1 }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

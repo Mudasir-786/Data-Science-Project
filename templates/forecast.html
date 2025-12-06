@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 AQI Forecast - Predictive Analytics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .search-box {
+            position: relative;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .search-box input {
+            width: calc(100% - 150px);
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-right: 10px;
+        }
+        #suggestions {
+            position: absolute;
+            top: 100%;
+            left: 30px;
+            right: 180px;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .suggestion-item:hover {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        .search-box button {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .forecast-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+        .chart-container { margin: 20px 0; height: 400px; }
+        .forecast-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .forecast-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .forecast-card h3 { font-size: 0.9rem; margin-bottom: 10px; }
+        .forecast-card .aqi { font-size: 2rem; font-weight: 700; }
+        .forecast-card .category { font-size: 0.8rem; margin-top: 5px; }
+        .loading { text-align: center; padding: 50px; color: #667eea; font-size: 1.2rem; }
+        .error { background: #f8d7da; color: #721c24; padding: 20px; border-radius: 10px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 AQI Forecast & Prediction</h1>
+            <p>Machine Learning-based 7-day Air Quality forecast</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="🔍 Start typing city name..." autocomplete="off" />
+            <div id="suggestions"></div>
+            <button onclick="getForecast()">Get Forecast</button>
+        </div>
+
+        <div class="forecast-container" id="forecastContainer">
+            <h2 id="cityName">City Forecast</h2>
+            <div class="chart-container">
+                <canvas id="forecastChart"></canvas>
+            </div>
+            <h3>7-Day Forecast:</h3>
+            <div class="forecast-cards" id="forecastCards"></div>
+        </div>
+    </div>
+
+    <script>
+        let forecastChart = null;
+
+        // CITY AUTOCOMPLETE
+        const cities = [
+            "Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Pune", "Ahmedabad", "Surat", "Jaipur",
+            "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Agra",
+            "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Amritsar", "Chandigarh", "Guwahati", "Dehradun",
+            "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala",
+            "Hyderabad", "Sukkur", "Larkana", "Khairpur", "Mirpur Khas", "Nawabshah", "Shikarpur", "Jacobabad", "Kandhkot", "Ghotki",
+            "London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool", "Edinburgh", "Bristol", "Sheffield", "Newcastle",
+            "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+            "Dubai", "Abu Dhabi", "Sharjah", "Doha", "Riyadh", "Jeddah", "Mecca", "Medina", "Kuwait City", "Muscat",
+            "Beijing", "Shanghai", "Tokyo", "Seoul", "Bangkok", "Singapore", "Kuala Lumpur", "Jakarta", "Manila", "Hanoi"
+        ];
+
+        const cityInput = document.getElementById('cityInput');
+        const suggestionsDiv = document.getElementById('suggestions');
+
+        cityInput.addEventListener('input', function() {
+            const query = this.value.trim().toLowerCase();
+            if (query.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+            const matches = cities.filter(city => city.toLowerCase().includes(query)).sort((a, b) => {
+                const aStarts = a.toLowerCase().startsWith(query);
+                const bStarts = b.toLowerCase().startsWith(query);
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return a.localeCompare(b);
+            }).slice(0, 10);
+            if (matches.length === 0) {
+                suggestionsDiv.innerHTML = '<div style="padding:15px;text-align:center;color:#ff6b6b;">⚠️ No cities found</div>';
+                suggestionsDiv.style.display = 'block';
+                return;
+            }
+            suggestionsDiv.innerHTML = matches.map(city => {
+                const regex = new RegExp(`(${query})`, 'gi');
+                const highlightedCity = city.replace(regex, '<span style="background:#ffeb3b;color:#000;font-weight:700;padding:1px 3px;border-radius:3px;">$1</span>');
+                return `<div class="suggestion-item" onclick="selectCity('${city}')">${highlightedCity}</div>`;
+            }).join('');
+            suggestionsDiv.style.display = 'block';
+        });
+
+        function selectCity(city) {
+            cityInput.value = city;
+            suggestionsDiv.style.display = 'none';
+            getForecast();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target !== cityInput && e.target !== suggestionsDiv) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        function getForecast() {
+            const city = document.getElementById('cityInput').value.trim();
+            if (!city) {
+                alert('Please enter a city name');
+                return;
+            }
+
+            const container = document.getElementById('forecastContainer');
+            container.style.display = 'block';
+            container.innerHTML = '<div class="loading">🔄 Loading forecast data...</div>';
+
+            fetch(`/api/forecast/${encodeURIComponent(city)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        container.innerHTML = `<div class="error">❌ ${data.error}</div>`;
+                        return;
+                    }
+                    displayForecast(data);
+                })
+                .catch(error => {
+                    container.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                });
+        }
+
+        function displayForecast(data) {
+            const container = document.getElementById('forecastContainer');
+            container.style.display = 'block';
+            container.innerHTML = `
+                <h2>📍 ${data.city} - AQI Forecast</h2>
+                <div class="chart-container">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+                <h3>7-Day Forecast:</h3>
+                <div class="forecast-cards" id="forecastCards"></div>
+            `;
+
+            // Create chart
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            const historicalDates = data.historical.map(d => d.date);
+            const historicalAqi = data.historical.map(d => d.aqi);
+            const forecastDates = data.forecast.map(d => d.date);
+            const forecastAqi = data.forecast.map(d => d.aqi);
+            const confidenceLow = data.forecast.map(d => d.confidence_low);
+            const confidenceHigh = data.forecast.map(d => d.confidence_high);
+
+            if (forecastChart) forecastChart.destroy();
+
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [...historicalDates, ...forecastDates],
+                    datasets: [{
+                        label: 'Historical AQI',
+                        data: [...historicalAqi, ...Array(forecastDates.length).fill(null)],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4
+                    }, {
+                        label: 'Predicted AQI',
+                        data: [...Array(historicalDates.length).fill(null), ...forecastAqi],
+                        borderColor: '#ff6b6b',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        title: { display: true, text: 'AQI Trend & 7-Day Forecast' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'AQI Value' } }
+                    }
+                }
+            });
+
+            // Display forecast cards
+            const cardsContainer = document.getElementById('forecastCards');
+            cardsContainer.innerHTML = '';
+            data.forecast.forEach(day => {
+                const card = document.createElement('div');
+                card.className = 'forecast-card';
+                card.innerHTML = `
+                    <h3>${new Date(day.date).toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'})}</h3>
+                    <div class="aqi">${day.aqi}</div>
+                    <div class="category">${day.category}</div>
+                    <div style="font-size: 0.7rem; margin-top: 5px;">±${Math.round((day.confidence_high - day.confidence_low)/2)}</div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>

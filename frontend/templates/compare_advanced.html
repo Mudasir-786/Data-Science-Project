@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📱 Multi-City Comparison</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .input-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .city-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .city-inputs input {
+            padding: 15px;
+            font-size: 1rem;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+        }
+        .suggestions-dropdown {
+            position: absolute;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            width: 300px;
+        }
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .suggestion-item:hover {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        .compare-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .results-container {
+            display: none;
+        }
+        .stats-table {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+        }
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .statistical-tests {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .test-result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 5px solid #667eea;
+        }
+        .test-result h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .significant {
+            background: #d4edda;
+            border-left-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📱 Multi-City Comparison with Statistics</h1>
+            <p>Compare up to 5 cities with advanced statistical analysis</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="input-box">
+            <h2 style="margin-bottom: 15px; color: #667eea;">Enter 5 Cities to Compare</h2>
+            <div style="background: #fffbcc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ffaa00;">
+                <strong>💡 Pro Tip:</strong> For better statistics (Mean, Std Dev), search each city from the <a href="/" style="color: #667eea; font-weight: bold;">main dashboard</a> multiple times first to build historical data!<br>
+                <small>Current results use live data (1 data point per city)</small>
+            </div>
+            <div class="city-inputs">
+                <div style="position:relative;">
+                    <input type="text" id="city1" placeholder="🔍 City 1 (e.g., Delhi)" required autocomplete="off" />
+                    <div id="suggestions1" class="suggestions-dropdown"></div>
+                </div>
+                <div style="position:relative;">
+                    <input type="text" id="city2" placeholder="🔍 City 2 (e.g., Mumbai)" required autocomplete="off" />
+                    <div id="suggestions2" class="suggestions-dropdown"></div>
+                </div>
+                <div style="position:relative;">
+                    <input type="text" id="city3" placeholder="🔍 City 3 (e.g., Bangalore)" required autocomplete="off" />
+                    <div id="suggestions3" class="suggestions-dropdown"></div>
+                </div>
+                <div style="position:relative;">
+                    <input type="text" id="city4" placeholder="🔍 City 4 (e.g., Karachi)" required autocomplete="off" />
+                    <div id="suggestions4" class="suggestions-dropdown"></div>
+                </div>
+                <div style="position:relative;">
+                    <input type="text" id="city5" placeholder="🔍 City 5 (e.g., Lahore)" required autocomplete="off" />
+                    <div id="suggestions5" class="suggestions-dropdown"></div>
+                </div>
+            </div>
+            <button class="compare-btn" onclick="compareCities()">Compare All 5 Cities</button>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <div class="stats-table">
+                <h2 style="margin-bottom: 20px; color: #667eea;">Comparative Statistics</h2>
+                <table id="statsTable"></table>
+            </div>
+
+            <div class="chart-container">
+                <h2 style="margin-bottom: 20px; color: #667eea;">Visual Comparison</h2>
+                <canvas id="comparisonChart"></canvas>
+            </div>
+
+            <div class="statistical-tests" id="statisticalTests">
+                <h2 style="margin-bottom: 20px; color: #667eea;">Statistical Tests</h2>
+                <div id="testsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GLOBAL CHART VARIABLE - Must destroy before recreating
+        let comparisonChart = null;
+
+        // CITY AUTOCOMPLETE FOR ALL 5 INPUTS
+        const cities = [
+            "Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Pune", "Ahmedabad", "Surat", "Jaipur",
+            "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Agra",
+            "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Amritsar", "Chandigarh", "Guwahati", "Dehradun",
+            "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala",
+            "Hyderabad", "Sukkur", "Larkana", "Khairpur", "Mirpur Khas", "Nawabshah", "Shikarpur", "Jacobabad", "Kandhkot", "Ghotki",
+            "London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool", "Edinburgh", "Bristol", "Sheffield", "Newcastle",
+            "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+            "Dubai", "Abu Dhabi", "Sharjah", "Doha", "Riyadh", "Jeddah", "Mecca", "Medina", "Kuwait City", "Muscat",
+            "Beijing", "Shanghai", "Tokyo", "Seoul", "Bangkok", "Singapore", "Kuala Lumpur", "Jakarta", "Manila", "Hanoi"
+        ];
+
+        // Setup autocomplete for each input
+        for (let i = 1; i <= 5; i++) {
+            const input = document.getElementById(`city${i}`);
+            const suggestionsDiv = document.getElementById(`suggestions${i}`);
+            
+            input.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                if (query.length === 0) {
+                    suggestionsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const matches = cities.filter(city => city.toLowerCase().includes(query)).sort((a, b) => {
+                    const aStarts = a.toLowerCase().startsWith(query);
+                    const bStarts = b.toLowerCase().startsWith(query);
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+                    return a.localeCompare(b);
+                }).slice(0, 8);
+                
+                if (matches.length === 0) {
+                    suggestionsDiv.innerHTML = '<div style="padding:10px;text-align:center;color:#ff6b6b;font-size:13px;">⚠️ No match</div>';
+                    suggestionsDiv.style.display = 'block';
+                    return;
+                }
+                
+                suggestionsDiv.innerHTML = matches.map(city => {
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    const highlighted = city.replace(regex, '<span style="background:#ffeb3b;color:#000;font-weight:700;padding:1px 3px;border-radius:3px;">$1</span>');
+                    return `<div class="suggestion-item" onclick="selectCity(${i}, '${city}')">${highlighted}</div>`;
+                }).join('');
+                
+                suggestionsDiv.style.display = 'block';
+            });
+        }
+
+        function selectCity(inputNum, cityName) {
+            document.getElementById(`city${inputNum}`).value = cityName;
+            document.getElementById(`suggestions${inputNum}`).style.display = 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            for (let i = 1; i <= 5; i++) {
+                const input = document.getElementById(`city${i}`);
+                const suggestions = document.getElementById(`suggestions${i}`);
+                if (e.target !== input && !suggestions.contains(e.target)) {
+                    suggestions.style.display = 'none';
+                }
+            }
+        });
+
+        function compareCities() {
+            const cityList = [
+                document.getElementById('city1').value.trim(),
+                document.getElementById('city2').value.trim(),
+                document.getElementById('city3').value.trim(),
+                document.getElementById('city4').value.trim(),
+                document.getElementById('city5').value.trim()
+            ].filter(c => c !== '');
+
+            if (cityList.length < 5) {
+                alert('⚠️ Please enter all 5 cities for comprehensive comparison!\n\nYou entered: ' + cityList.length + ' cities\nRequired: 5 cities');
+                return;
+            }
+
+            fetch('/api/compare-stats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cities: cityList })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                displayResults(data);
+            })
+            .catch(error => alert('Error: ' + error.message));
+        }
+
+        function displayResults(data) {
+            document.getElementById('resultsContainer').style.display = 'block';
+
+            // Statistics Table
+            const table = document.getElementById('statsTable');
+            let tableHTML = `
+                <thead>
+                    <tr>
+                        <th>City</th>
+                        <th>Current AQI</th>
+                        <th>Mean AQI</th>
+                        <th>Median</th>
+                        <th>Std Dev</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Data Points</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            data.comparison.forEach(city => {
+                const isLimited = city.data_points === 1;
+                const rowStyle = isLimited ? 'background: #fff9e6;' : '';
+                const badge = isLimited ? '<span style="background:#ffaa00;color:white;padding:2px 8px;border-radius:5px;font-size:0.8rem;margin-left:5px;">Live</span>' : '';
+                
+                tableHTML += `
+                    <tr style="${rowStyle}">
+                        <td><strong>${city.city_with_country || city.city}${badge}</strong></td>
+                        <td>${city.current_aqi}</td>
+                        <td>${city.mean_aqi}${isLimited ? ' <small>(live)</small>' : ''}</td>
+                        <td>${city.median_aqi}</td>
+                        <td>${city.std_aqi}${isLimited ? ' <small title="Only 1 data point">⚠️</small>' : ''}</td>
+                        <td style="color: #00e400;">${city.min_aqi}</td>
+                        <td style="color: #ff0000;">${city.max_aqi}</td>
+                        <td><strong>${city.data_points}</strong> ${isLimited ? '(need more)' : '✅'}</td>
+                    </tr>
+                `;
+            });
+            tableHTML += '</tbody>';
+            table.innerHTML = tableHTML;
+
+            // Chart - DESTROY OLD CHART FIRST
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+            
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.comparison.map(c => c.city_with_country || c.city),
+                    datasets: [{
+                        label: 'Mean AQI',
+                        data: data.comparison.map(c => c.mean_aqi),
+                        backgroundColor: '#667eea'
+                    }, {
+                        label: 'Current AQI',
+                        data: data.comparison.map(c => c.current_aqi),
+                        backgroundColor: '#ff6b6b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // Statistical Tests
+            const testsDiv = document.getElementById('testsContent');
+            let testsHTML = '';
+
+            if (data.statistical_tests.t_test) {
+                const ttest = data.statistical_tests.t_test;
+                testsHTML += `
+                    <div class="test-result ${ttest.significant ? 'significant' : ''}">
+                        <h4>📊 Independent T-Test</h4>
+                        <p><strong>Cities:</strong> ${ttest.cities[0]} vs ${ttest.cities[1]}</p>
+                        <p><strong>T-statistic:</strong> ${ttest.t_statistic}</p>
+                        <p><strong>P-value:</strong> ${ttest.p_value}</p>
+                        <p><strong>Result:</strong> ${ttest.interpretation}</p>
+                    </div>
+                `;
+            }
+
+            if (data.statistical_tests.anova) {
+                const anova = data.statistical_tests.anova;
+                testsHTML += `
+                    <div class="test-result ${anova.significant ? 'significant' : ''}">
+                        <h4>📊 ANOVA (Analysis of Variance)</h4>
+                        <p><strong>F-statistic:</strong> ${anova.f_statistic}</p>
+                        <p><strong>P-value:</strong> ${anova.p_value}</p>
+                        <p><strong>Result:</strong> ${anova.interpretation}</p>
+                    </div>
+                `;
+            }
+
+            testsHTML += `
+                <div class="test-result">
+                    <h4>🏆 Best & Worst Cities</h4>
+                    <p><strong>Best Air Quality:</strong> ${data.best_city} ✅</p>
+                    <p><strong>Worst Air Quality:</strong> ${data.worst_city} ⚠️</p>
+                </div>
+            `;
+            
+            // Correlation Matrix (if available)
+            if (data.correlation_matrix && Object.keys(data.correlation_matrix).length > 0) {
+                testsHTML += `
+                    <div class="test-result">
+                        <h4>🔗 Pollutant Correlations</h4>
+                        <p><small>Correlation between cities' AQI patterns</small></p>
+                        <table style="width: 100%; font-size: 0.9rem; margin-top: 10px;">
+                            <thead><tr><th>City Pair</th><th>Correlation</th></tr></thead>
+                            <tbody>
+                `;
+                
+                const cities = Object.keys(data.correlation_matrix);
+                cities.forEach((city1, i) => {
+                    cities.slice(i+1).forEach(city2 => {
+                        const corr = data.correlation_matrix[city1][city2];
+                        if (corr !== undefined) {
+                            testsHTML += `
+                                <tr>
+                                    <td>${city1} ↔ ${city2}</td>
+                                    <td><strong>${corr.toFixed(3)}</strong></td>
+                                </tr>
+                            `;
+                        }
+                    });
+                });
+                
+                testsHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                testsHTML += `
+                    <div class="test-result" style="background: #f0f0f0;">
+                        <h4>🔗 Pollutant Correlations</h4>
+                        <p style="color: #666;">⚠️ Not enough historical data for correlation analysis.</p>
+                        <p style="font-size: 0.9rem; color: #888;">Search each city multiple times from the main dashboard to build data.</p>
+                    </div>
+                `;
+            }
+
+            testsDiv.innerHTML = testsHTML;
+        }
+    </script>
+</body>
+</html>

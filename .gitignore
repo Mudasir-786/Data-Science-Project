@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+aqi_history.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Model files (optional - uncomment if you don't want to track models)
+# *.pkl
+# *.h5
+# *.pth
+
+# Data files (optional - uncomment if you don't want to track large datasets)
+# *.parquet
+# *.csv
+# *.json
+
+# Documentation temporary files
+*.md~
+CLEANUP_SUMMARY.md
+NOTIFICATION_FEATURE_SUMMARY.md
+PROJECT_EXPLANATION_FOR_SIR.md
+PROJECT_STRUCTURE.md
+
+# Template creation scripts (not needed in production)
+create_ds_templates_part1.py
+create_ds_templates_part2.py
+create_ds_templates_part3.py
+create_improved_templates.py
+create_templates.py
+create_test_features.py
+
+# Batch files
+*.bat
+
+# Example files
+.env.example

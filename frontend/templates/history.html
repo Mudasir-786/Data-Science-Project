@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search History - AQI Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Poppins, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .search-filter input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+        .search-filter input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102,126,234,0.3);
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        th:hover { background: linear-gradient(135deg, #764ba2, #667eea); }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover { background: #f5f5f5; }
+        .aqi-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+        }
+        .good { background: #00e400; }
+        .moderate { background: #ffff00; color: #333; }
+        .unhealthy-sensitive { background: #ff7e00; }
+        .unhealthy { background: #ff0000; }
+        .very-unhealthy { background: #8f3f97; }
+        .hazardous { background: #7e0023; }
+        .loading { text-align: center; padding: 50px; font-size: 1.3em; color: #667eea; }
+        .no-data { text-align: center; padding: 50px; color: #999; font-size: 1.2em; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-card h3 { font-size: 2em; margin-bottom: 5px; }
+        .stat-card p { font-size: 0.9em; opacity: 0.9; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+        <h1>📜 Your Search History</h1>
+        
+        <div class="stats" id="stats" style="display:none;"></div>
+        
+        <div class="search-filter">
+            <input type="text" id="searchInput" placeholder="🔍 Search by city name..." onkeyup="filterHistory()">
+        </div>
+        
+        <div class="filter-buttons">
+            <button class="filter-btn active" onclick="filterByCategory('all')">All</button>
+            <button class="filter-btn" onclick="filterByCategory('good')">Good</button>
+            <button class="filter-btn" onclick="filterByCategory('moderate')">Moderate</button>
+            <button class="filter-btn" onclick="filterByCategory('unhealthy')">Unhealthy</button>
+        </div>
+        
+        <div id="loading" class="loading">🔄 Loading your search history...</div>
+        
+        <div id="content" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">#</th>
+                        <th onclick="sortTable(1)">City</th>
+                        <th onclick="sortTable(2)">AQI</th>
+                        <th onclick="sortTable(3)">Category</th>
+                        <th onclick="sortTable(4)">PM2.5</th>
+                        <th onclick="sortTable(5)">Date & Time</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="noData" class="no-data" style="display:none;">
+            📭 No search history yet!<br>Start searching cities to build your history.
+        </div>
+    </div>
+
+    <script>
+        let allHistory = [];
+        let currentFilter = 'all';
+
+        function getCat(aqi) {
+            if (aqi <= 50) return { c: 'good', t: 'Good' };
+            if (aqi <= 100) return { c: 'moderate', t: 'Moderate' };
+            if (aqi <= 150) return { c: 'unhealthy-sensitive', t: 'Unhealthy for Sensitive' };
+            if (aqi <= 200) return { c: 'unhealthy', t: 'Unhealthy' };
+            if (aqi <= 300) return { c: 'very-unhealthy', t: 'Very Unhealthy' };
+            return { c: 'hazardous', t: 'Hazardous' };
+        }
+
+        function filterByCategory(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            displayHistory(allHistory);
+        }
+
+        function filterHistory() {
+            displayHistory(allHistory);
+        }
+
+        function displayHistory(data) {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('historyBody');
+            tbody.innerHTML = '';
+            
+            let filtered = data.filter(rec => {
+                const cat = getCat(rec.aqi);
+                const matchesSearch = rec.city.toLowerCase().includes(searchTerm);
+                const matchesFilter = currentFilter === 'all' || cat.c.includes(currentFilter);
+                return matchesSearch && matchesFilter;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No results found</td></tr>';
+                return;
+            }
+
+            filtered.forEach((rec, i) => {
+                const cat = getCat(rec.aqi);
+                tbody.innerHTML += `<tr>
+                        <td>${i+1}</td>
+                        <td><strong>${rec.city}</strong></td>
+                        <td><span class="aqi-badge ${cat.c}">${Math.round(rec.aqi)}</span></td>
+                        <td>${cat.t}</td>
+                        <td>${rec.pm25 ? rec.pm25.toFixed(2) : 'N/A'}</td>
+                        <td>${new Date(rec.timestamp).toLocaleString()}</td>
+                    </tr>`;
+            });
+        }
+
+        function showStats(data) {
+            const avgAqi = (data.reduce((sum, rec) => sum + rec.aqi, 0) / data.length).toFixed(1);
+            const maxAqi = Math.max(...data.map(r => r.aqi)).toFixed(1);
+            const minAqi = Math.min(...data.map(r => r.aqi)).toFixed(1);
+            const cities = new Set(data.map(r => r.city)).size;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stat-card">
+                    <h3>${data.length}</h3>
+                    <p>Total Searches</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${cities}</h3>
+                    <p>Cities Searched</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${avgAqi}</h3>
+                    <p>Average AQI</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${minAqi}</h3>
+                    <p>Best AQI</p>
+                </div>
+            `;
+            document.getElementById('stats').style.display = 'grid';
+        }
+
+        fetch('/api/history')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                if (data.history && data.history.length > 0) {
+                    allHistory = data.history;
+                    document.getElementById('content').style.display = 'block';
+                    showStats(data.history);
+                    displayHistory(data.history);
+                } else {
+                    document.getElementById('noData').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('noData').innerHTML = 'Error loading history: ' + err.message;
+                document.getElementById('noData').style.display = 'block';
+            });
+
+        function sortTable(col) {
+            const tbody = document.getElementById('historyBody');
+            const rows = Array.from(tbody.rows);
+            
+            rows.sort((a, b) => {
+                const aVal = a.cells[col].textContent;
+                const bVal = b.cells[col].textContent;
+                return aVal.localeCompare(bVal);
+            });
+            
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Cities - AQI Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Poppins, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .city-input-group {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .city-input-group label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        .city-input-group input {
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+        .city-input-group input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102,126,234,0.3);
+        }
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .suggestion-item:hover {
+            background: #f0f4ff;
+            color: #667eea;
+        }
+        .compare-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+            margin: 0 auto;
+        }
+        .compare-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .results {
+            display: none;
+            margin-top: 40px;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .city-card {
+            padding: 25px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            position: relative;
+        }
+        .city-card h3 { margin-bottom: 15px; font-size: 1.5em; }
+        .aqi-value { font-size: 3em; font-weight: 700; margin: 10px 0; }
+        .category { font-size: 1.1em; opacity: 0.9; }
+        .best-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ffd700;
+            color: #333;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .worst-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        .chart-container {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        .loading { text-align: center; padding: 50px; font-size: 1.3em; color: #667eea; display: none; }
+        .error { background: #ffebee; color: #c62828; padding: 20px; border-radius: 10px; margin-top: 20px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+        <h1>📊 Compare Cities</h1>
+        
+        <div class="input-section">
+            <div class="city-input-group">
+                <label for="city1">City 1</label>
+                <input type="text" id="city1" placeholder="🔍 Start typing city name..." autocomplete="off">
+                <div id="suggestions1" class="suggestions-dropdown"></div>
+            </div>
+            <div class="city-input-group">
+                <label for="city2">City 2</label>
+                <input type="text" id="city2" placeholder="🔍 Start typing city name..." autocomplete="off">
+                <div id="suggestions2" class="suggestions-dropdown"></div>
+            </div>
+            <div class="city-input-group">
+                <label for="city3">City 3</label>
+                <input type="text" id="city3" placeholder="🔍 Start typing city name..." autocomplete="off">
+                <div id="suggestions3" class="suggestions-dropdown"></div>
+            </div>
+        </div>
+                <input type="text" id="city3" placeholder="Enter city name (e.g., Tokyo)">
+            </div>
+        </div>
+        
+        <button class="compare-btn" onclick="compareCities()">Compare AQI</button>
+        
+        <div class="loading" id="loading">🔄 Fetching data...</div>
+        <div class="error" id="error"></div>
+        
+        <div class="results" id="results">
+            <div class="cards" id="cards"></div>
+            <div class="chart-container">
+                <canvas id="compareChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+
+        // CITY AUTOCOMPLETE FOR ALL 3 INPUTS
+        const cities = [
+            "Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Pune", "Ahmedabad", "Surat", "Jaipur",
+            "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Agra",
+            "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Amritsar", "Chandigarh", "Guwahati", "Dehradun",
+            "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala",
+            "Hyderabad", "Sukkur", "Larkana", "Khairpur", "Mirpur Khas", "Nawabshah", "Shikarpur", "Jacobabad", "Kandhkot", "Ghotki",
+            "London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool", "Edinburgh", "Bristol", "Sheffield", "Newcastle",
+            "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+            "Dubai", "Abu Dhabi", "Sharjah", "Doha", "Riyadh", "Jeddah", "Mecca", "Medina", "Kuwait City", "Muscat",
+            "Beijing", "Shanghai", "Tokyo", "Seoul", "Bangkok", "Singapore", "Kuala Lumpur", "Jakarta", "Manila", "Hanoi"
+        ];
+
+        // Setup autocomplete for each of the 3 inputs
+        for (let i = 1; i <= 3; i++) {
+            const input = document.getElementById(`city${i}`);
+            const suggestionsDiv = document.getElementById(`suggestions${i}`);
+            
+            input.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                if (query.length === 0) {
+                    suggestionsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const matches = cities.filter(city => city.toLowerCase().includes(query)).sort((a, b) => {
+                    const aStarts = a.toLowerCase().startsWith(query);
+                    const bStarts = b.toLowerCase().startsWith(query);
+                    if (aStarts && !bStarts) return -1;
+                    if (!aStarts && bStarts) return 1;
+                    return a.localeCompare(b);
+                }).slice(0, 8);
+                
+                if (matches.length === 0) {
+                    suggestionsDiv.innerHTML = '<div style="padding:12px;text-align:center;color:#ff6b6b;font-size:14px;">⚠️ No cities found</div>';
+                    suggestionsDiv.style.display = 'block';
+                    return;
+                }
+                
+                suggestionsDiv.innerHTML = matches.map(city => {
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    const highlighted = city.replace(regex, '<span style="background:#ffeb3b;color:#000;font-weight:700;padding:1px 3px;border-radius:3px;">$1</span>');
+                    return `<div class="suggestion-item" onclick="selectCity(${i}, '${city}')">${highlighted}</div>`;
+                }).join('');
+                
+                suggestionsDiv.style.display = 'block';
+            });
+        }
+
+        function selectCity(inputNum, cityName) {
+            document.getElementById(`city${inputNum}`).value = cityName;
+            document.getElementById(`suggestions${inputNum}`).style.display = 'none';
+        }
+
+        document.addEventListener('click', function(e) {
+            for (let i = 1; i <= 3; i++) {
+                const input = document.getElementById(`city${i}`);
+                const suggestions = document.getElementById(`suggestions${i}`);
+                if (e.target !== input && !suggestions.contains(e.target)) {
+                    suggestions.style.display = 'none';
+                }
+            }
+        });
+
+        async function compareCities() {
+            const city1 = document.getElementById('city1').value.trim();
+            const city2 = document.getElementById('city2').value.trim();
+            const city3 = document.getElementById('city3').value.trim();
+
+            if (!city1 || !city2 || !city3) {
+                document.getElementById('error').innerHTML = 'Please enter all 3 cities';
+                document.getElementById('error').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const results = await Promise.all([
+                    fetch(`/api/test-api/${city1}`).then(r => r.json()),
+                    fetch(`/api/test-api/${city2}`).then(r => r.json()),
+                    fetch(`/api/test-api/${city3}`).then(r => r.json())
+                ]);
+
+                const cities = results.map((r, i) => ({
+                    name: [city1, city2, city3][i],
+                    displayName: r.country && r.country !== 'Unknown' ? `${[city1, city2, city3][i]}, ${r.country}` : [city1, city2, city3][i],
+                    aqi: r.aqi || 0,
+                    category: getCat(r.aqi || 0)
+                }));
+
+                const sorted = [...cities].sort((a, b) => a.aqi - b.aqi);
+                const best = sorted[0].name;
+                const worst = sorted[2].name;
+
+                displayResults(cities, best, worst);
+            } catch (err) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').innerHTML = 'Error: ' + err.message;
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function getCat(aqi) {
+            if (aqi <= 50) return 'Good';
+            if (aqi <= 100) return 'Moderate';
+            if (aqi <= 150) return 'Unhealthy for Sensitive';
+            if (aqi <= 200) return 'Unhealthy';
+            if (aqi <= 300) return 'Very Unhealthy';
+            return 'Hazardous';
+        }
+
+        function displayResults(cities, best, worst) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+
+            const cardsHTML = cities.map(c => `
+                <div class="city-card">
+                    ${c.name === best ? '<div class="best-badge">✨ Best</div>' : ''}
+                    ${c.name === worst ? '<div class="worst-badge">⚠️ Worst</div>' : ''}
+                    <h3>${c.displayName}</h3>
+                    <div class="aqi-value">${Math.round(c.aqi)}</div>
+                    <div class="category">${c.category}</div>
+                </div>
+            `).join('');
+            document.getElementById('cards').innerHTML = cardsHTML;
+
+            if (chart) chart.destroy();
+            const ctx = document.getElementById('compareChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: cities.map(c => c.displayName),
+                    datasets: [{
+                        label: 'AQI Level',
+                        data: cities.map(c => c.aqi),
+                        backgroundColor: ['#667eea', '#764ba2', '#f093fb']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'AQI Comparison', font: { size: 18 } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'AQI' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 AQI Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .calculator-box {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+        }
+        .input-group {
+            margin-bottom: 25px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+        }
+        .input-group small {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .calculate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .result-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 30px;
+            display: none;
+        }
+        .result-box .aqi-value {
+            font-size: 5rem;
+            font-weight: 700;
+            margin: 20px 0;
+        }
+        .result-box .category {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .result-box .message {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-top: 20px;
+        }
+        .info-box {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .info-box ul {
+            list-style-position: inside;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 AQI Calculator</h1>
+            <p>Calculate Air Quality Index from pollutant concentrations</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="calculator-box">
+            <h2 style="margin-bottom: 20px; color: #667eea;">Enter Pollutant Values</h2>
+            
+            <div class="input-group">
+                <label>PM2.5 (µg/m³)</label>
+                <input type="number" id="pm25" step="0.1" placeholder="e.g., 35.5" />
+                <small>Fine particulate matter (< 2.5 micrometers)</small>
+            </div>
+
+            <div class="input-group">
+                <label>PM10 (µg/m³)</label>
+                <input type="number" id="pm10" step="0.1" placeholder="e.g., 50" />
+                <small>Coarse particulate matter (< 10 micrometers)</small>
+            </div>
+
+            <div class="input-group">
+                <label>CO - Carbon Monoxide (ppm)</label>
+                <input type="number" id="co" step="0.1" placeholder="e.g., 1.2" />
+                <small>Parts per million</small>
+            </div>
+
+            <div class="input-group">
+                <label>NO₂ - Nitrogen Dioxide (ppb)</label>
+                <input type="number" id="no2" step="1" placeholder="e.g., 45" />
+                <small>Parts per billion</small>
+            </div>
+
+            <div class="input-group">
+                <label>SO₂ - Sulfur Dioxide (ppb)</label>
+                <input type="number" id="so2" step="1" placeholder="e.g., 30" />
+                <small>Parts per billion</small>
+            </div>
+
+            <div class="input-group">
+                <label>O₃ - Ozone (ppb)</label>
+                <input type="number" id="o3" step="1" placeholder="e.g., 60" />
+                <small>Parts per billion</small>
+            </div>
+
+            <button class="calculate-btn" onclick="calculateAQI()">Calculate AQI</button>
+        </div>
+
+        <div class="result-box" id="resultBox">
+            <h2>Your AQI Result:</h2>
+            <div class="aqi-value" id="aqiValue">--</div>
+            <div class="category" id="category">--</div>
+            <div class="message" id="message">--</div>
+        </div>
+
+        <div class="info-box">
+            <h3>📚 How AQI is Calculated:</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Measure pollutant concentrations (PM2.5, PM10, CO, NO₂, SO₂, O₃)</li>
+                <li><strong>Step 2:</strong> Convert each concentration to AQI using EPA breakpoints</li>
+                <li><strong>Step 3:</strong> Take the maximum AQI value as the final index</li>
+                <li><strong>Step 4:</strong> Category is determined based on final AQI value</li>
+            </ul>
+            <br/>
+            <h3>🎯 AQI Categories:</h3>
+            <ul>
+                <li><strong style="color: #00e400;">Good (0-50):</strong> Air quality is satisfactory</li>
+                <li><strong style="color: #ffff00;">Moderate (51-100):</strong> Acceptable for most</li>
+                <li><strong style="color: #ff7e00;">Unhealthy for Sensitive (101-150):</strong> Sensitive groups affected</li>
+                <li><strong style="color: #ff0000;">Unhealthy (151-200):</strong> Everyone may experience effects</li>
+                <li><strong style="color: #8f3f97;">Very Unhealthy (201-300):</strong> Serious health effects</li>
+                <li><strong style="color: #7e0023;">Hazardous (301+):</strong> Emergency conditions</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function calculateAQI() {
+            const pm25 = parseFloat(document.getElementById('pm25').value) || 0;
+            const pm10 = parseFloat(document.getElementById('pm10').value) || 0;
+            const co = parseFloat(document.getElementById('co').value) || 0;
+            const no2 = parseFloat(document.getElementById('no2').value) || 0;
+            const so2 = parseFloat(document.getElementById('so2').value) || 0;
+            const o3 = parseFloat(document.getElementById('o3').value) || 0;
+
+            if (pm25 === 0 && pm10 === 0 && co === 0 && no2 === 0 && so2 === 0 && o3 === 0) {
+                alert('Please enter at least one pollutant value');
+                return;
+            }
+
+            fetch('/api/calculate-aqi', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pm25, pm10, co, no2, so2, o3 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
+                document.getElementById('aqiValue').textContent = data.aqi;
+                document.getElementById('category').textContent = data.category;
+                document.getElementById('message').textContent = data.health_message;
+                
+                const resultBox = document.getElementById('resultBox');
+                resultBox.style.display = 'block';
+                resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            })
+            .catch(error => alert('Error: ' + error.message));
+        }
+    </script>
+</body>
+</html>

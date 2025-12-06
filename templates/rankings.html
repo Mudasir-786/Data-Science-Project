@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Rankings - AQI Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Poppins, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .filter-section {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filter-btn {
+            padding: 10px 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover { background: #f5f5f5; }
+        .rank-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); font-weight: 700; }
+        .rank-2 { background: linear-gradient(135deg, #c0c0c0, #e8e8e8); font-weight: 700; }
+        .rank-3 { background: linear-gradient(135deg, #cd7f32, #e8a87c); font-weight: 700; }
+        .medal { font-size: 1.5em; margin-right: 10px; }
+        .aqi-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+        }
+        .good { background: #00e400; }
+        .moderate { background: #ffff00; color: #333; }
+        .unhealthy-sensitive { background: #ff7e00; }
+        .unhealthy { background: #ff0000; }
+        .very-unhealthy { background: #8f3f97; }
+        .hazardous { background: #7e0023; }
+        .loading { text-align: center; padding: 50px; font-size: 1.3em; color: #667eea; }
+        .no-data { text-align: center; padding: 50px; color: #999; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← Back to Dashboard</a>
+        <h1>🏆 City Rankings</h1>
+        <p class="subtitle">Top cities by air quality (Last 24 hours)</p>
+        
+        <div class="filter-section">
+            <button class="filter-btn active" onclick="filterRankings('all')">All Cities</button>
+            <button class="filter-btn" onclick="filterRankings('good')">Good AQI</button>
+            <button class="filter-btn" onclick="filterRankings('moderate')">Moderate AQI</button>
+            <button class="filter-btn" onclick="filterRankings('unhealthy')">Unhealthy AQI</button>
+        </div>
+        
+        <div id="loading" class="loading">🔄 Loading rankings...</div>
+        
+        <div id="content" style="display:none;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>City</th>
+                        <th>AQI</th>
+                        <th>Category</th>
+                        <th>Searches</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingsBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="noData" class="no-data" style="display:none;">
+            📭 No data available for rankings!<br>Search some cities first.
+        </div>
+    </div>
+
+    <script>
+        let allRankings = [];
+        let currentFilter = 'all';
+
+        function getCat(aqi) {
+            if (aqi <= 50) return { c: 'good', t: 'Good' };
+            if (aqi <= 100) return { c: 'moderate', t: 'Moderate' };
+            if (aqi <= 150) return { c: 'unhealthy-sensitive', t: 'Unhealthy for Sensitive' };
+            if (aqi <= 200) return { c: 'unhealthy', t: 'Unhealthy' };
+            if (aqi <= 300) return { c: 'very-unhealthy', t: 'Very Unhealthy' };
+            return { c: 'hazardous', t: 'Hazardous' };
+        }
+
+        function getMedal(rank) {
+            if (rank === 1) return '🥇';
+            if (rank === 2) return '🥈';
+            if (rank === 3) return '🥉';
+            return '';
+        }
+
+        function filterRankings(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            displayRankings(allRankings);
+        }
+
+        function displayRankings(data) {
+            const tbody = document.getElementById('rankingsBody');
+            tbody.innerHTML = '';
+
+            let filtered = data.filter(city => {
+                const cat = getCat(city.aqi);
+                if (currentFilter === 'all') return true;
+                if (currentFilter === 'good') return city.aqi <= 50;
+                if (currentFilter === 'moderate') return city.aqi > 50 && city.aqi <= 100;
+                if (currentFilter === 'unhealthy') return city.aqi > 100;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px;">No cities match this filter</td></tr>';
+                return;
+            }
+
+            filtered.forEach((city, i) => {
+                const rank = i + 1;
+                const cat = getCat(city.aqi);
+                const medal = getMedal(rank);
+                const rowClass = rank <= 3 ? `rank-${rank}` : '';
+                tbody.innerHTML += `
+                    <tr class="${rowClass}">
+                        <td><span class="medal">${medal}</span> ${rank}</td>
+                        <td><strong>${city.city}</strong></td>
+                        <td><span class="aqi-badge ${cat.c}">${Math.round(city.aqi)}</span></td>
+                        <td>${cat.t}</td>
+                        <td>${city.searches || 1} times</td>
+                    </tr>
+                `;
+            });
+        }
+
+        fetch('/api/rankings')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                if (data.rankings && data.rankings.length > 0) {
+                    allRankings = data.rankings;
+                    document.getElementById('content').style.display = 'block';
+                    displayRankings(data.rankings);
+                } else {
+                    document.getElementById('noData').style.display = 'block';
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('noData').innerHTML = 'Error loading rankings: ' + err.message;
+                document.getElementById('noData').style.display = 'block';
+            });
+    </script>
+</body>
+</html>

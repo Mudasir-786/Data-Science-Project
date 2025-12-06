@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Test Features - AQI Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            position: relative;
+        }
+        
+        body.dark-mode .header { background: rgba(30, 30, 50, 0.95); color: #fff; }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        body.dark-mode .header h1 {
+            background: linear-gradient(135deg, #8b9bff, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header p { color: #666; font-size: 1.1rem; margin-bottom: 20px; }
+        body.dark-mode .header p { color: #aaa; }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        
+        .theme-toggle {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .theme-toggle:hover { transform: scale(1.2) rotate(20deg); }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .feature-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode .feature-box { background: rgba(30, 30, 50, 0.95); color: #fff; }
+        .feature-box:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); }
+        .feature-icon { font-size: 3rem; margin-bottom: 15px; }
+        .feature-box h2 { font-size: 1.5rem; margin-bottom: 15px; color: #333; }
+        body.dark-mode .feature-box h2 { color: #fff; }
+        .feature-box p { color: #666; margin-bottom: 20px; line-height: 1.6; }
+        body.dark-mode .feature-box p { color: #aaa; }
+        
+        .test-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .test-btn:hover { transform: scale(1.02); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        .test-btn:active { transform: scale(0.98); }
+        .test-btn.green { background: linear-gradient(135deg, #28a745, #20c997); }
+        .test-btn.red { background: linear-gradient(135deg, #ff6b6b, #ee5a6f); }
+        
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+        
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; display: block; }
+        body.dark-mode .status.success { background: rgba(72, 187, 120, 0.2); color: #9ae6b4; border: 1px solid #48bb78; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; display: block; }
+        body.dark-mode .status.error { background: rgba(245, 101, 101, 0.2); color: #fc8181; border: 1px solid #f56565; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; display: block; }
+        body.dark-mode .status.info { background: rgba(66, 153, 225, 0.2); color: #90cdf4; border: 1px solid #4299e1; }
+        
+        .toggle-switch { position: relative; display: inline-block; width: 60px; height: 34px; margin: 20px 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: linear-gradient(135deg, #667eea, #764ba2); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        
+        .favorites-demo { margin-top: 15px; }
+        .favorite-chip {
+            display: inline-block;
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .favorite-chip:hover { transform: scale(1.05); box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3); }
+        
+        .share-buttons { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .share-btn { flex: 1; min-width: 120px; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; color: white; }
+        .share-btn.twitter { background: #1DA1F2; }
+        .share-btn.facebook { background: #4267B2; }
+        .share-btn.whatsapp { background: #25D366; }
+        .share-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+        
+        .print-preview { margin-top: 15px; padding: 20px; background: #f8f9fa; border-radius: 10px; display: none; }
+        body.dark-mode .print-preview { background: rgba(50, 50, 70, 0.5); }
+        
+        @media print {
+            body { background: white; }
+            .header, .back-btn, .test-btn, .theme-toggle { display: none; }
+            .feature-box { page-break-inside: avoid; }
+        }
+        
+        @media (max-width: 768px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8rem; }
+            .theme-toggle { top: 20px; right: 20px; font-size: 1.5rem; }
+            .share-buttons { flex-direction: column; }
+            .share-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</div>
+            <h1>🧪 Test New Features</h1>
+            <p>Test each feature individually and see how they work!</p>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-box">
+                <div class="feature-icon">🌙</div>
+                <h2>Dark Mode Toggle</h2>
+                <p>Switch between light and dark themes. Click the moon icon in the header to toggle instantly!</p>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle" onchange="toggleDarkModeSwitch()">
+                    <span class="slider"></span>
+                </label>
+                <div style="margin-top: 10px;">Dark Mode: <strong id="darkModeStatus">OFF</strong></div>
+                <div class="status" id="darkModeResult"></div>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon">⭐</div>
+                <h2>Favorites Management</h2>
+                <p>Save your favorite cities for quick access. Add, view, and remove cities from your favorites list.</p>
+                <button class="test-btn" onclick="testFavorites()">Show My Favorites</button>
+                <div class="favorites-demo" id="favoritesDemo"></div>
+                <div class="status" id="favoritesResult"></div>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon">🔔</div>
+                <h2>Push Notifications</h2>
+                <p>Enable browser notifications to get alerts about air quality changes in your saved cities.</p>
+                <button class="test-btn" onclick="testNotifications()">Request Permission</button>
+                <button class="test-btn green" onclick="sendTestNotification()">Send Test Alert</button>
+                <div class="status" id="notificationResult"></div>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon">📱</div>
+                <h2>Social Sharing</h2>
+                <p>Share air quality data with friends and family on social media platforms.</p>
+                <div class="share-buttons">
+                    <button class="share-btn twitter" onclick="shareOn('twitter')">🐦 Twitter</button>
+                    <button class="share-btn facebook" onclick="shareOn('facebook')">📘 Facebook</button>
+                    <button class="share-btn whatsapp" onclick="shareOn('whatsapp')">💬 WhatsApp</button>
+                </div>
+                <div class="status" id="shareResult"></div>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon">🖨️</div>
+                <h2>Print & Export</h2>
+                <p>Print air quality reports or save them as PDF for offline access and records.</p>
+                <button class="test-btn" onclick="testPrint()">Preview Print</button>
+                <button class="test-btn green" onclick="window.print()">Print Page</button>
+                <div class="print-preview" id="printPreview">
+                    <h3>📄 Print Preview</h3>
+                    <p><strong>Date:</strong> <span id="printDate"></span></p>
+                    <p><strong>Content:</strong> Air Quality Dashboard Report</p>
+                    <p>This page is print-optimized with clean formatting.</p>
+                </div>
+                <div class="status" id="printResult"></div>
+            </div>
+
+            <div class="feature-box">
+                <div class="feature-icon">💾</div>
+                <h2>Data Export</h2>
+                <p>Export your search history and AQI data as CSV or JSON files for analysis.</p>
+                <button class="test-btn" onclick="exportData('csv')">📥 Export as CSV</button>
+                <button class="test-btn red" onclick="exportData('json')">📋 Export as JSON</button>
+                <div class="status" id="exportResult"></div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="/" class="back-btn" style="font-size: 1.2rem; padding: 15px 40px;">🏠 Back to Main Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            document.getElementById('darkModeToggle').checked = isDark;
+            document.getElementById('darkModeStatus').textContent = isDark ? 'ON' : 'OFF';
+            document.querySelector('.theme-toggle').textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', isDark);
+            const resultDiv = document.getElementById('darkModeResult');
+            resultDiv.className = 'status success';
+            resultDiv.textContent = isDark ? '✅ Dark mode activated!' : '☀️ Light mode activated!';
+        }
+        
+        function toggleDarkModeSwitch() { toggleDarkMode(); }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').checked = true;
+                document.getElementById('darkModeStatus').textContent = 'ON';
+                document.querySelector('.theme-toggle').textContent = '☀️';
+            }
+        });
+        
+        function testFavorites() {
+            const demoDiv = document.getElementById('favoritesDemo');
+            const resultDiv = document.getElementById('favoritesResult');
+            let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+            if (favorites.length === 0) {
+                favorites = ['Delhi', 'Mumbai', 'Bangalore', 'Karachi'];
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+            }
+            demoDiv.innerHTML = '<div style="margin-top: 10px;"><strong>Your Favorites:</strong></div>';
+            favorites.forEach(city => {
+                const chip = document.createElement('span');
+                chip.className = 'favorite-chip';
+                chip.textContent = city + ' ⭐';
+                chip.onclick = () => { if (confirm(`Remove ${city} from favorites?`)) { removeFavorite(city); } };
+                chip.title = 'Click to remove';
+                demoDiv.appendChild(chip);
+            });
+            resultDiv.className = 'status success';
+            resultDiv.textContent = `✅ ${favorites.length} cities in your favorites! Click a chip to remove.`;
+        }
+        
+        function removeFavorite(city) {
+            let favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+            favorites = favorites.filter(c => c !== city);
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            testFavorites();
+        }
+        
+        function testNotifications() {
+            const resultDiv = document.getElementById('notificationResult');
+            if (!("Notification" in window)) {
+                resultDiv.className = 'status error';
+                resultDiv.textContent = '❌ Your browser does not support notifications.';
+                return;
+            }
+            if (Notification.permission === "granted") {
+                resultDiv.className = 'status success';
+                resultDiv.textContent = '✅ Notifications already enabled! Click "Send Test Alert" below.';
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        resultDiv.className = 'status success';
+                        resultDiv.textContent = '✅ Notification permission granted!';
+                    } else {
+                        resultDiv.className = 'status error';
+                        resultDiv.textContent = '❌ Permission denied.';
+                    }
+                });
+            } else {
+                resultDiv.className = 'status error';
+                resultDiv.textContent = '❌ Notifications blocked.';
+            }
+        }
+        
+        function sendTestNotification() {
+            const resultDiv = document.getElementById('notificationResult');
+            if (Notification.permission === "granted") {
+                new Notification("🌍 AQI Alert", {
+                    body: "Air quality in Delhi is Moderate (AQI: 75). Consider reducing outdoor activities.",
+                    icon: "https://cdn-icons-png.flaticon.com/512/1163/1163661.png"
+                });
+                resultDiv.className = 'status success';
+                resultDiv.textContent = '✅ Test notification sent!';
+            } else {
+                resultDiv.className = 'status error';
+                resultDiv.textContent = '❌ Please enable notifications first.';
+            }
+        }
+        
+        function shareOn(platform) {
+            const resultDiv = document.getElementById('shareResult');
+            const text = "Check out the Air Quality Index in my city! 🌍 #AQI";
+            const url = window.location.origin;
+            let shareUrl = '';
+            switch(platform) {
+                case 'twitter': shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`; break;
+                case 'facebook': shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`; break;
+                case 'whatsapp': shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`; break;
+            }
+            if (shareUrl) {
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+                resultDiv.className = 'status success';
+                resultDiv.textContent = `✅ Sharing on ${platform.charAt(0).toUpperCase() + platform.slice(1)}!`;
+            }
+        }
+        
+        function testPrint() {
+            const previewDiv = document.getElementById('printPreview');
+            const resultDiv = document.getElementById('printResult');
+            document.getElementById('printDate').textContent = new Date().toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            previewDiv.style.display = 'block';
+            resultDiv.className = 'status success';
+            resultDiv.textContent = '✅ Print preview ready!';
+        }
+        
+        function exportData(format) {
+            const resultDiv = document.getElementById('exportResult');
+            const data = [
+                { city: 'Delhi', aqi: 156, category: 'Unhealthy', pm25: 89, timestamp: new Date().toISOString() },
+                { city: 'Mumbai', aqi: 89, category: 'Moderate', pm25: 45, timestamp: new Date().toISOString() },
+                { city: 'Bangalore', aqi: 45, category: 'Good', pm25: 23, timestamp: new Date().toISOString() },
+                { city: 'Karachi', aqi: 167, category: 'Unhealthy', pm25: 95, timestamp: new Date().toISOString() }
+            ];
+            let content = '', filename = '', mimeType = '';
+            if (format === 'csv') {
+                const headers = Object.keys(data[0]).join(',');
+                const rows = data.map(row => Object.values(row).join(',')).join('\n');
+                content = headers + '\n' + rows;
+                filename = `aqi_data_${new Date().toISOString().split('T')[0]}.csv`;
+                mimeType = 'text/csv';
+            } else {
+                content = JSON.stringify(data, null, 2);
+                filename = `aqi_data_${new Date().toISOString().split('T')[0]}.json`;
+                mimeType = 'application/json';
+            }
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            resultDiv.className = 'status success';
+            resultDiv.textContent = `✅ Data exported as ${format.toUpperCase()}! File: ${filename}`;
+        }
+    </script>
+</body>
+</html>
