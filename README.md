@@ -6,6 +6,13 @@
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.0.3-orange.svg)](https://xgboost.readthedocs.io/)
 [![Dask](https://img.shields.io/badge/Dask-2023.12.1-red.svg)](https://dask.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/Muhammad-Yousif-Shar-Balouch/FifthSemester_Data-Science-Project?style=social)](https://github.com/Muhammad-Yousif-Shar-Balouch/FifthSemester_Data-Science-Project)
+[![GitHub Forks](https://img.shields.io/github/forks/Muhammad-Yousif-Shar-Balouch/FifthSemester_Data-Science-Project?style=social)](https://github.com/Muhammad-Yousif-Shar-Balouch/FifthSemester_Data-Science-Project)
+
+> **Academic Project** | Data Science Course | 5th Semester  
+> **University**: [Your University Name]  
+> **Submitted to**: [Professor/Instructor Name]  
+> **Date**: December 2025
 
 ---
 
@@ -170,8 +177,8 @@ DS-Project-1/
 
 ### Step 1: Clone Repository
 ```bash
-git clone https://github.com/yourusername/DS-Project-1.git
-cd DS-Project-1
+git clone https://github.com/Muhammad-Yousif-Shar-Balouch/FifthSemester_Data-Science-Project.git
+cd FifthSemester_Data-Science-Project
 ```
 
 ### Step 2: Install Dependencies
@@ -368,9 +375,9 @@ This project is licensed under the **MIT License** - see the LICENSE file for de
 
 ## 📧 Contact
 
-**Project Maintainer**: Amar  
-**GitHub**: [@yourusername](https://github.com/yourusername)  
-**Project Link**: [https://github.com/yourusername/DS-Project-1](https://github.com/yourusername/DS-Project-1)
+**Project Maintainer**: Muhammad Yousif Shar Balouch  
+**GitHub**: [@Muhammad-Yousif-Shar-Balouch](https://github.com/Muhammad-Yousif-Shar-Balouch)  
+**Project Link**: [FifthSemester_Data-Science-Project](https://github.com/Muhammad-Yousif-Shar-Balouch/FifthSemester_Data-Science-Project)
 
 ---
 

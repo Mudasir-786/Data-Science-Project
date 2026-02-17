@@ -46,7 +46,6 @@
         }
         .back-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
         .search-box {
-            position: relative;
             background: white;
             border-radius: 20px;
             padding: 30px;
@@ -60,31 +59,6 @@
             border: 2px solid #667eea;
             border-radius: 10px;
             margin-right: 10px;
-        }
-        #suggestions {
-            position: absolute;
-            top: 100%;
-            left: 30px;
-            right: 180px;
-            background: white;
-            border: 2px solid #667eea;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .suggestion-item {
-            padding: 12px 20px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: all 0.2s ease;
-        }
-        .suggestion-item:hover {
-            background: #f0f4ff;
-            color: #667eea;
         }
         .search-box button {
             padding: 15px 40px;
@@ -134,8 +108,7 @@
         </div>
 
         <div class="search-box">
-            <input type="text" id="cityInput" placeholder="🔍 Start typing city name..." autocomplete="off" />
-            <div id="suggestions"></div>
+            <input type="text" id="cityInput" placeholder="Enter city name (e.g., Delhi, Mumbai)" />
             <button onclick="getForecast()">Get Forecast</button>
         </div>
 
@@ -151,60 +124,6 @@
 
     <script>
         let forecastChart = null;
-
-        // CITY AUTOCOMPLETE
-        const cities = [
-            "Delhi", "Mumbai", "Bangalore", "Kolkata", "Chennai", "Hyderabad", "Pune", "Ahmedabad", "Surat", "Jaipur",
-            "Lucknow", "Kanpur", "Nagpur", "Indore", "Bhopal", "Visakhapatnam", "Patna", "Vadodara", "Ludhiana", "Agra",
-            "Nashik", "Faridabad", "Meerut", "Rajkot", "Varanasi", "Srinagar", "Amritsar", "Chandigarh", "Guwahati", "Dehradun",
-            "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala",
-            "Hyderabad", "Sukkur", "Larkana", "Khairpur", "Mirpur Khas", "Nawabshah", "Shikarpur", "Jacobabad", "Kandhkot", "Ghotki",
-            "London", "Manchester", "Birmingham", "Leeds", "Glasgow", "Liverpool", "Edinburgh", "Bristol", "Sheffield", "Newcastle",
-            "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
-            "Dubai", "Abu Dhabi", "Sharjah", "Doha", "Riyadh", "Jeddah", "Mecca", "Medina", "Kuwait City", "Muscat",
-            "Beijing", "Shanghai", "Tokyo", "Seoul", "Bangkok", "Singapore", "Kuala Lumpur", "Jakarta", "Manila", "Hanoi"
-        ];
-
-        const cityInput = document.getElementById('cityInput');
-        const suggestionsDiv = document.getElementById('suggestions');
-
-        cityInput.addEventListener('input', function() {
-            const query = this.value.trim().toLowerCase();
-            if (query.length === 0) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
-            const matches = cities.filter(city => city.toLowerCase().includes(query)).sort((a, b) => {
-                const aStarts = a.toLowerCase().startsWith(query);
-                const bStarts = b.toLowerCase().startsWith(query);
-                if (aStarts && !bStarts) return -1;
-                if (!aStarts && bStarts) return 1;
-                return a.localeCompare(b);
-            }).slice(0, 10);
-            if (matches.length === 0) {
-                suggestionsDiv.innerHTML = '<div style="padding:15px;text-align:center;color:#ff6b6b;">⚠️ No cities found</div>';
-                suggestionsDiv.style.display = 'block';
-                return;
-            }
-            suggestionsDiv.innerHTML = matches.map(city => {
-                const regex = new RegExp(`(${query})`, 'gi');
-                const highlightedCity = city.replace(regex, '<span style="background:#ffeb3b;color:#000;font-weight:700;padding:1px 3px;border-radius:3px;">$1</span>');
-                return `<div class="suggestion-item" onclick="selectCity('${city}')">${highlightedCity}</div>`;
-            }).join('');
-            suggestionsDiv.style.display = 'block';
-        });
-
-        function selectCity(city) {
-            cityInput.value = city;
-            suggestionsDiv.style.display = 'none';
-            getForecast();
-        }
-
-        document.addEventListener('click', function(e) {
-            if (e.target !== cityInput && e.target !== suggestionsDiv) {
-                suggestionsDiv.style.display = 'none';
-            }
-        });
 
         function getForecast() {
             const city = document.getElementById('cityInput').value.trim();
